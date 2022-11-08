@@ -1,0 +1,99 @@
+% Velice jednoduchý .tex dokument
+\documentclass[12pt]{article}
+
+\usepackage{amsmath,amssymb,amsfonts,amsthm,mathtools}
+
+% Jako editor používám VSCode s rozšířením LaTeX Workshop.
+% https://marketplace.visualstudio.com/items?itemName=James-Yu.latex-workshop
+% Aby defaultní kompilace fungovala s pythontexem, musí složka,
+% ve který pracuješ, obsahovat speciální .latexmkrc soubor.
+% Ten jsem našel buď v pythontex dokumentaci nebo v nějakým
+% GitHub Issue pro LaTeX Workshop nebo pythontex.
+% Možná jsou ještě nějaký požadavky na systém atd., takže určitě
+% prolistovat pythontex dokumentaci https://ctan.org/pkg/pythontex.
+\usepackage[makestderr]{pythontex}
+
+\newcounter{mycounter}
+\setcounter{mycounter}{1}
+% Nastavení counteru, který určuje, kdy pythontex resetuje instanci pythonu.
+% Já chci mít pouze jednu instanci na celý dokument (zachování všech proměnných),
+% proto vkládám mnou vytvořený counter, jehož hodnota se nebude měnit.
+\restartpythontexsession{\themycounter}
+
+\begin{document}
+
+Hello World
+
+\begin{pycode}
+# Zde se píše python kód.
+# Můžeš i importovat svoje vlastní moduly.
+
+# Bacha na to, když do latexu z pythonu vyplyvneš nějakej
+# netisknutelnej znak. Uloží se do výstupu z pythonu
+# a když si ho chce latex natáhnout, vyhodí chybu,
+# která se většinou nevyřeší opětovnou kompilací, 
+# takže musíš smazat všechny temp soubory pythontexu,
+# optimálně i vlastnoručně spustit pythontex pomocí
+# 'pythontex tex/main.tex' a zkompilovat znova.
+
+import sympy as smp
+from typing import List, Tuple, Any
+UE = smp.UnevaluatedExpr
+
+# Vytvoří zápis ODV: Obecně, Dosazení, Výsledek
+def create_ODV(expr, subs: List[Tuple[Any, Any]], unit: str) -> str:
+    expr_O: str = smp.latex(expr)
+
+    expr = expr.subs(subs)
+    expr_D: str = smp.latex(expr)
+
+    expr = expr.doit()
+    expr_V_v1: str = smp.latex(expr)
+
+    expr = expr.evalf()
+    expr_V_v2: str = smp.latex(expr)
+
+    return fr"{expr_O} = {expr_D} = {expr_V_v1} \approx {expr_V_v2} \, {unit}"
+\end{pycode}
+
+% Protože se mi neresetuje instance pythonu,
+% proměnné jsou zachované mezi jednotlivými python bloky.
+\begin{pycode}
+# Definice proměnných
+a, b, c, d = smp.symbols(r"a_{1}, b^{\prime}, \bar{c}, \ddot{d}")
+# Vytvoření rovnice
+expr = (a + b)**(c - d)
+# Definice funkčních hodnot pro proměnné
+subs = [
+    (a, UE(10)),
+    (b, UE(5.5)),
+    (c, UE(smp.sqrt(3))),
+    (d, UE(smp.pi)),
+]
+# Vytvoření zápisu výpočtu
+odv = create_ODV(expr, subs, r"\mathrm{MPa}")
+\end{pycode}
+
+Pomocí \textbackslash py\{\} můžeme vkládat proměnné z Pythonu do LaTeXu.
+
+První příklad:
+
+$$\py{odv}$$
+
+\begin{pycode}
+# Definice nových funkčních hodnot pro proměnné
+subs = [
+    (a, UE(2)),
+    (b, UE(3)),
+    (c, UE(4)),
+    (d, UE(5)),
+]
+# Vytvoření zápisu výpočtu pro nové hodnoty
+odv = create_ODV(expr, subs, r"\mathrm{MPa}")
+\end{pycode}
+
+Druhý příklad:
+
+$$\py{odv}$$
+
+\end{document}
